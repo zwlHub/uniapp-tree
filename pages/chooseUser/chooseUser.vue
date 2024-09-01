@@ -1,12 +1,31 @@
 <template>
 	<view>
-		<xiaolu-tree  :checkList="checkList" :onlyChild="true"  v-if="tree.length>0"  :options="prop" @sendValue="confirm"  :isCheck="true" :treeNone="tree"></xiaolu-tree>
+		<xiaolu-tree  :checkList="checkList" 
+		:onlyChild="true"  v-if="tree.length>0"  :options="prop" 
+		@sendValue="confirm" @toChildren="toChildren"  :isCheck="true" :treeNone="tree"></xiaolu-tree>
 	</view>
 </template>
 
 <script>
+	import { ref } from 'vue';
 	import XiaoluTree from '../../components/xiaolu-tree-vue3/tree.vue';
 	import { treeNode } from './data.js'
+	
+	
+	const treeData = ref([
+		{
+			id: 'a-1',
+			name: '济南市',
+			user: false,
+			role: ''
+		},
+		{
+			id: 'a-2',
+			name: '青岛市',
+			user: false,
+			role: ''
+		}
+	])
 
 	export default {
 		components: {
@@ -31,7 +50,7 @@
 			// #endif
 			this.prop = JSON.parse(prop)
 			this.checkList = checkList;
-			this.tree=treeNode;//树形数据赋值
+			this.tree=treeData.value;//树形数据赋值
 		},
 		methods: {
 			//获取选中的值
@@ -43,7 +62,63 @@
 				}
 				this.backList = val;
 			},
-			
+			toChildren(val) {
+				console.log('下一级',val)
+				//模拟请求
+				setTimeout(() => {
+					let response = []
+					if(val == 'a-1' ) {
+						response = [
+							{
+								id: 'a-1-1',
+								name: '历下区',
+								user: false,
+								role: ''
+							},
+							{
+								id: 'a-1-2',
+								name: '济南用户1',
+								user: true,
+								role: ''
+							},
+							{
+								id: 'a-1-3',
+								name: '济南用户2',
+								user: true,
+								role: ''
+							}
+						]
+					} else {
+						response = [
+							{
+								id: 'a-2-1',
+								name: '黄岛区',
+								user: false,
+								role: ''
+							},
+							{
+								id: 'a-2-2',
+								name: '青岛用户1',
+								user: true,
+								role: ''
+							},
+							{
+								id: 'a-1-3',
+								name: '青岛用户2',
+								user: true,
+								role: ''
+							}
+						]
+					}
+					treeData.value.forEach((item,index) => {
+						if( item.id === val ) {
+							item.children = response
+						}
+					})
+					this.tree=treeData.value;//树形数据赋值
+					uni.$emit('requestEnd',treeData.value)
+				},2000)
+			},
 			// 返回上一页传参
 			 backConfirm(val) {
 				

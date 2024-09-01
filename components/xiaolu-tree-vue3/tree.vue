@@ -24,7 +24,7 @@
 			</view>
 		</view>
 		<view>
-			<view class="container-list">
+			<view class="container-list" v-if="!isLoading">
 				<view class="common" v-for="(item, index) in tree" @click="handleClick(item,index)" :key="index">
 					<label class="content">
 						<view class="list-item" v-show="isCheck">
@@ -61,7 +61,8 @@
 							</view>
 						</view>
 						<view class="lable-text">{{item[props.options.label]}}</view>
-						<view class="right"><i v-if="!item.user&&item.children.length>0"
+						<!-- &&item.children.length>0 -->
+						<view class="right"><i v-if="!item.user"
 								class="iconfont icon-z043 iconclass"></i></view>
 					</label>
 				</view>
@@ -141,10 +142,11 @@
 		newNum = ref(0),
 		isre = ref(false),
 		searchRef = ref(null);
-	const emit = defineEmits(['sendValue'])
+	const emit = defineEmits(['sendValue','toChildren'])
 	// 初始化
 	const initComponent = () => {
 		if (newCheckList.value.length !== 0) {
+			// 存在已经选中的元素
 			if (props.options.multiple) {
 				if (props.options.checkStrictly) {
 					checkAllChoose();
@@ -201,21 +203,78 @@
 		}
 	})
 	//到下一级
+	const isLoading = ref(false)
 	function toChildren(item) {
 		if (item.user) return
+		tree_stack.value.push(item);
 		uni.showLoading({
 			title: '加载中'
 		})
-		let children = props.options.children;
-		if (!item.user && item[children].length > 0 && !(tree_stack.value[0][props.keyValue] == item[props.keyValue])) {
-			tree.value = item[children];
-			tree_stack.value.push(item);
-		}
-		nextTick(() => {
-			uni.hideLoading()
-			scrollLeft.value += 200;
-		})
-		if (props.options.checkStrictly) checkAllChoose();
+		isLoading.value = true
+		setTimeout(() => {
+			isLoading.value = false
+			let response = []
+			if(item.id == 'a-1' ) {
+				response = [
+					{
+						id: 'a-1-1',
+						name: '历下区',
+						user: false,
+						role: ''
+					},
+					{
+						id: 'a-1-2',
+						name: '济南用户1',
+						user: true,
+						role: ''
+					},
+					{
+						id: 'a-1-3',
+						name: '济南用户2',
+						user: true,
+						role: ''
+					}
+				]
+			} else {
+				response = [
+					{
+						id: 'a-2-1',
+						name: '黄岛区',
+						user: false,
+						role: ''
+					},
+					{
+						id: 'a-2-2',
+						name: '青岛用户1',
+						user: true,
+						role: ''
+					},
+					{
+						id: 'a-1-3',
+						name: '青岛用户2',
+						user: true,
+						role: ''
+					}
+				]
+			}
+			tree.value.forEach((i,index) => {
+				if( i.id == item.id ) {
+					i.children = response
+				}
+			})
+			let children = props.options.children;
+			if (!item.user && item[children].length > 0 && !(tree_stack.value[0][props.keyValue] == item[props.keyValue])) {
+				tree.value = item[children];
+				// tree_stack.value.push(item);
+			}
+			nextTick(() => {
+				uni.hideLoading()
+				scrollLeft.value += 200;
+			})
+			if (props.options.checkStrictly) checkAllChoose();
+			
+		},2000)
+		
 	}
 
 	function computAllNumber(arr) {
@@ -420,14 +479,26 @@
 		emit('sendValue',newCheckList.value,'back')
 	}
 	const handleClick = (item, index) => {
-		let children = item[props.options.children]
-		if (index > -1 && children && children.length > 0) {
-			toChildren(item)
-		} else if (props.options.multiple) {
-			checkboxChange(item, index, item.bx, item.qx)
-		} else {
-			checkbox(item, index)
-		}
+		console.log("当前点击",item)
+		
+			
+			// let children = item[props.options.children]
+			// let children = item.children
+			// if (index > -1 && children && children.length > 0) {
+			// 	toChildren(item)
+			// } else if (props.options.multiple) {
+			// 	checkboxChange(item, index, item.bx, item.qx)
+			// } else {
+			// 	checkbox(item, index)
+			// }
+			
+			if(item.user && props.options.multiple) {
+				checkboxChange(item, index, item.bx, item.qx)
+			} else if( item.user) {
+				checkbox(item, index)
+			} else {
+				toChildren(item)
+			}	
 	}
 </script>
 <style lang="scss" scoped>
